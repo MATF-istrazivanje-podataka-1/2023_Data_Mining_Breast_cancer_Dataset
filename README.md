@@ -11,7 +11,7 @@ Skup podataka se zove `Breast cancer gene expression - CuMiDa` i može se naći 
 ## Uputstvo za pokretanje
 
 Skinuti csv dataset u `dataset/` folder. <br>
-Za rad je potrebno pokrenuti prvo `EDA/EDA.ipynb` koji će generisati dodatne csv-ove iz skinutog, kao što je npr. normalizovani datasset, PCA dataset sa planom da se uniformno koriste u daljoj analizi
+Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će generisati dodatne csv-ove iz skinutog, kao što je npr. normalizovani datasset, PCA dataset sa planom da se uniformno koriste u daljoj analizi
 
 ## Korišćeni modeli
 
