@@ -56,7 +56,7 @@ class DatasetExtractor():
 
 
 if __name__ == "__main__":
-    PCA_COMPONENTS = 80
+    PCA_COMPONENTS = 90
     dataset_extractor = DatasetExtractor()
 
     dataset_extractor.extract_pca_dataset(pca_components=PCA_COMPONENTS)

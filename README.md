@@ -15,7 +15,11 @@ Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će g
 
 ## Korišćeni modeli
 
-- Klasifikacšija: _TODO_
+- Klasifikacšija: <br>
+    - XGBoost
+    - KNN
+    - SVM
+    - Ansamble
 - Klasterovanje: _TODO_
 - Pravila pridruživanja: _TODO_
 
