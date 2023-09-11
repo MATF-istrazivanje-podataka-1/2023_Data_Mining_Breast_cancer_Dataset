@@ -19,7 +19,7 @@ Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će g
     - XGBoost
     - KNN
     - SVM
-    - Ansamble
+    - Ansambl
 - Klasterovanje: _TODO_
 - Pravila pridruživanja: _TODO_
 

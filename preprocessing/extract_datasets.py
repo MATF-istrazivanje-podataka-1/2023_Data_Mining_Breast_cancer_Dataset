@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 class DatasetExtractor():
     dataset_name = 'Breast_GSE45827'
@@ -54,9 +55,14 @@ class DatasetExtractor():
         
         df_pca.to_csv(self.additional_datasets_path+name+'.csv')
 
+    def extract_tsne_dataset(self, tsne_components, name=f'Breast_GSE45827_tsne'):
+        X, y = self.split_X_y()
+        X_normalized = (X - X.mean()) / X.std()
+        tsne = TSNE(n_components = tsne_components)
+        tsne.fit(X_normalized)
 
 if __name__ == "__main__":
-    PCA_COMPONENTS = 90
+    PCA_COMPONENTS = 2
     dataset_extractor = DatasetExtractor()
 
     dataset_extractor.extract_pca_dataset(pca_components=PCA_COMPONENTS)
