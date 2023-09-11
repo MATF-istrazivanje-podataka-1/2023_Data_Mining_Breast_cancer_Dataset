@@ -24,6 +24,8 @@ _OPREZ:_ Modeli su veliki (~250 MB)
     - KNN
     - SVM
     - Ansambl
-- Klasterovanje: _TODO_
+- Klasterovanje: <br>
+    - KMeans
+    - Gaussian Mixture
 - Pravila pridruživanja: _TODO_
 
