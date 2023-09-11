@@ -15,7 +15,7 @@ Zbog prevelike veličine fajla, skup podataka se mora skinuti
 Skinuti csv dataset u `dataset/` folder. <br>
 Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će generisati normalizovani dataset. <br>
 Za poređenje modela u klasifikaciji, tj. fajla `models/classification/model_comparison.ipynb`, morate pokrenuti fajlove `KNN.ipynb`, `xgboost.ipynb` i `SVM.ipynb` koji se nalaze u istom folderu radi ekstrakcije modela. <br>
-_OPREZ:_ Modeli su veliki (~250 MB)
+_OPREZ:_ Modeli su veliki (~250 MB ukupno)
 
 ## Korišćeni modeli
 
