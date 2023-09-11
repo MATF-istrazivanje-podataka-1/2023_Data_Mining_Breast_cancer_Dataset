@@ -7,15 +7,19 @@ _mail:_ mi20002@alas.matf.bg.ac.rs
 ## Skup podataka
 
 Skup podataka se zove `Breast cancer gene expression - CuMiDa` i može se naći [ovde](https://www.kaggle.com/datasets/brunogrisci/breast-cancer-gene-expression-cumida/code?resource=download)
+<br>
+Zbog prevelike veličine fajla, skup podataka se mora skinuti
 
 ## Uputstvo za pokretanje
 
 Skinuti csv dataset u `dataset/` folder. <br>
-Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će generisati dodatne csv-ove iz skinutog, kao što je npr. normalizovani datasset, PCA dataset sa planom da se uniformno koriste u daljoj analizi
+Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će generisati normalizovani dataset. <br>
+Za poređenje modela u klasifikaciji, tj. fajla `models/classification/model_comparison.ipynb`, morate pokrenuti fajlove `KNN.ipynb`, `xgboost.ipynb` i `SVM.ipynb` koji se nalaze u istom folderu radi ekstrakcije modela. <br>
+_OPREZ:_ Modeli su veliki (~250 MB)
 
 ## Korišćeni modeli
 
-- Klasifikacšija: <br>
+- Klasifikacija: <br>
     - XGBoost
     - KNN
     - SVM
