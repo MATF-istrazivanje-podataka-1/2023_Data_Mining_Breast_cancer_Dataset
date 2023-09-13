@@ -17,6 +17,10 @@ Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će g
 Za poređenje modela u klasifikaciji, tj. fajla `models/classification/model_comparison.ipynb`, morate pokrenuti fajlove `KNN.ipynb`, `xgboost.ipynb` i `SVM.ipynb` koji se nalaze u istom folderu radi ekstrakcije modela. <br>
 _OPREZ:_ Modeli su veliki (~250 MB ukupno)
 
+### Koriscene biblioteke
+numpy, pandas, seaborn, pickle, sklearn, xgboost, imblearn, matplotlib
+
+
 ## Korišćeni modeli
 
 - Klasifikacija: <br>
@@ -27,5 +31,5 @@ _OPREZ:_ Modeli su veliki (~250 MB ukupno)
 - Klasterovanje: <br>
     - KMeans
     - Gaussian Mixture
-- Pravila pridruživanja: _TODO_
+- Pravila pridruživanja: Apriori
 
