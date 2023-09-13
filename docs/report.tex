@@ -1,0 +1,430 @@
+% Velicina i tip stranice
+\documentclass[a4paper]{article}
+
+%% Dodaci za jezik
+
+\usepackage{ucs}
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[serbian]{babel}
+
+
+%% Dodatak i podesavanja za margine i uvlacenje paragrafa
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.7em}
+
+% Definisana komanda za stepen
+\newcommand{\degree}{\ensuremath{^\circ}}
+
+%% Korisni dodaci za matematiku i crtanje
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{comment}
+
+
+% Označavanje figura pavle.padjin@gmail.com
+\usepackage{caption}
+\captionsetup[figure]{labelsep=period}
+\captionsetup[tabular]{labelsep=period}
+%\captionsetup{justification=raggedcenter,singlelinecheck=false}
+
+\title{Analiza skupa podataka za rak dojke}
+\author{Branko Grbić - Matematički fakultet, Univerzitet u Beogradu}
+
+\begin{document}
+
+
+\maketitle
+
+
+\tableofcontents
+
+\newpage
+
+\section{Uvod}
+    \quad U ovom seminarskom radu, na skupu podataka za rak dojke, demonstrirana je: - eksplorativna analiza podataka, klasifikacija, klasterovanje i pravila pridruživanja ispisana u programu SPSS. 
+    Za klasifikaciju je korišćen:
+    \begin{itemize}
+        \item XGBoost
+        \item SVM
+        \item KNN
+    \end{itemize}
+    Za klasterovanje je korišćen:
+    \begin{itemize}
+        \item KMeans
+        \item Gaussian Mixture
+    \end{itemize}
+    Za pravila pridruđivanja je korišćen:
+    \begin{itemize}
+        \item Apriori
+    \end{itemize}
+
+\section{Opis skupa podataka}
+    \quad Skup podataka "Breast cancer gene expression - CuMiDa" [1], sadrži 151 uzorak, od kojih svaki ima 54676 atributa (gena) koji se klasifikuju u 6 klasa:
+    \begin{itemize}
+        \item Basal
+        \item HER
+        \item Cell line
+        \item Luminal A
+        \item Luminal B
+        \item Normal
+    \end{itemize}
+    S obzirom na ogroman broj atributa, nemoguće je prikazati šta koj atribut služi, ali ćemo u nastavku objasniti dublje model kroz EDA.
+    
+
+\section{Eksplorativna analiza podataka}
+    Prvo je neophodno proveriti karakteristike skupe podataka, odnosno broj atributa, klasa i nedostajuće vrednosti.
+    \begin{center}
+        \label{im:dataset_head}
+        \includegraphics[height=4cm,keepaspectratio]{dataset_head.png}
+        \captionof{figure}{Prikaz skupa podataka}
+    \end{center}
+
+    Nakon kratkog utvrđivanja, može se pokazati i da su svi atributi postojeći, sa decimalnim vrednostima. Možemo takođe videti i koliko su klase pojedinačno reprezentovane. Iz naredne slike, možemo videti da su klase nebalansirane.
+
+    \begin{center}
+        \label{im:type_counts}
+        \includegraphics[height=7cm,keepaspectratio]{type_counts.png}
+        \captionof{figure}{Balansiranost klase}
+    \end{center}
+
+    Nakon normalizacije podataka, prikazana su prva 3 atributa u odnosu na klase. Može se primetiti da se ne vidi jasna korelacija između atributa i klasa, te se moraju još procesirati podaci.
+    \begin{center}
+        \label{im:first_three_features}
+        \includegraphics[height=5cm,keepaspectratio]{first_three_features.png}
+        \captionof{figure}{Prva 3 atributa}
+    \end{center}
+
+    To navodi na pokušaj redukcije dimenzionalnosti, pa PCA (Principal Component Analysis) tehnika može doći jako korisna. Naime, za ukupnu objašnjenu varijansu od 85\% koristi se 90 atributa, što nam može doći kasnije kao odlična metrika za redukovanje skupa podataka.
+
+    \begin{center}
+        \label{im:explained_variance}
+        \includegraphics[height=5.5cm,keepaspectratio]{explained_variance.png}
+        \captionof{figure}{Suma varijanse kroz komponente}
+    \end{center}
+
+    Za prve 3 izvučene komponente, ne može se uočiti jasna razlika između klasa.
+    \begin{center}
+        \label{im:pca}
+        \includegraphics[height=10cm,keepaspectratio]{pca.png}
+        \captionof{figure}{PCA prve 2 komponente}
+    \end{center}
+
+    \begin{center}
+        \label{im:pca_3d}
+        \includegraphics[height=12.5cm]{pca_3d.png}
+        \captionof{figure}{PCA prve 3 komponente}
+    \end{center}
+    
+    To nas navodi da treba proveriti korelaciju atributa. S obzirom na ogroman broj atributa, ne može se otkriti korelacija između svakog para jednostavno, te je ovo iskorišćeno samo u demonstracione svrhe. Naime, jako redak broj atributa kroz ceo skup podataka ima korelaciju $ |corr| > 0.9 $
+
+    \begin{center}
+        \label{im:correlation_matrices}
+        \includegraphics[height=13cm,keepaspectratio]{correlation_matrices.png}
+        \captionof{figure}{Matirce korelacije prvih 5 atributa}
+    \end{center}
+
+\section{Klasifikacija}
+    Kao što je i ranije napomenuto, gledaće se 3 modela, XGBoost, SVM i KNN, ali takođe će se modeli uporediti. Na kraju, napraviće se ansambl sa 3 najbolja modela od svaka od ova 3 tipa i proveriti uspešnost kombinovanja modela.
+    \par
+    Klasifikaciju smo za sva 3 modela vršili sa i bez redukcije dimenzionalnosti (PCA) i sa i bez nadsemplovanja (SMOTE). Svi podaci su u startu normalizovani. Kao metrika tačnosti uzet je F1 rezultat, ali takođe je urađena i tačnost modela. Vršena je podela skupa na trening (80\%) i test (20\%) koja je ista kroz sve modele, da bi se mogla uporediti tačnost. 
+    \begin{center}
+        \label{im:test_dataset_counts Score}
+        \includegraphics[height=6cm,keepaspectratio]{test_dataset_counts.png}
+        \captionof{figure}{Broj klasa u test skupu}
+    \end{center}
+
+    \subsection{XGBoost}
+        XGBoost pripada grupi stabla odlučivanja koja koristi "gradijentno pojačanje" da nađe najbolji rezultat. Za razliku od modela koji radi na sličan način, modela nasumičnih šuma (eng. Random Forest), XGBoost se fokusira na minimizaciju pristrasnosti i uklanjanje neprilagođavanja. On radi tako da stabla koja daju loš rezultat, kombinuje u nadi da će iz njih izrasti kombinovano bolji model nego ranije. 
+
+        \par Korišćenjem Grid Search-a, nađeni su sledeći hiperparametri
+        \begin{itemize}
+            \item Normal dataset - learning\_rate: 0.1, max\_depth=6, n\_estimators=100
+            \item PCA dataset - learning\_rate: 0.1, max\_depth=5, n\_estimators=500
+            \item Normal dataset with SMOTE - learning\_rate: 0.1, max\_depth=6, n\_estimators=100
+            \item PCA dataset with SMOTE - learning\_rate: 0.1, max\_depth=5, n\_estimators=500
+        \end{itemize}
+
+        U narednim slikama možemo videti rezultate:
+
+        \begin{center}
+            \label{im:XGBoost F1 score}
+            \includegraphics[height=7cm,keepaspectratio]{XGBoost F1.png}
+            \captionof{figure}{XGBoost grafik F1 rezultata}
+        \end{center}
+        
+        \begin{center}
+            \label{im:XGBoost Accuracy score}
+            \includegraphics[height=7cm,keepaspectratio]{XGBoost Accuracy.png}
+            \captionof{figure}{XGBoost grafik tačnosti}
+        \end{center}
+
+        \begin{center}
+            \label{im:XGBoost Confusion matrix}
+            \includegraphics[height=15cm,keepaspectratio]{XGBoost Confusion Matrix.png}
+            \captionof{figure}{XGBoost Matrica kofnuzije}
+        \end{center}
+
+    \subsection{SVM}
+        Metoda potpornih vektora je model nadgledanog učenja, korišćen kako i u klasifikacionim, tako i u regresionim problemima. SVM karakteriše tip kernela s kojim radi. Linearni kernel je jako pogodan za uzorak s visokom dimenzionalnošću (zbog male šanse preprilagođavanja), što se može pokazati i traženjem najboljih hiperparametara.
+        \par Korišćenjem Grid Search-a, nađeni su sledeći hiperparametri
+        \begin{itemize}
+            \item Normal dataset - C: 0.1, gamma: 1, kernel: linear
+            \item PCA dataset - C: 1, gamma: scale, kernel: sigmoid
+            \item Normal dataset with SMOTE - C: 0.1, gamma: 1, kernel: linear
+            \item PCA dataset with SMOTE - C: 1, gamma: scale, kernel: sigmoid
+        \end{itemize}
+
+        U narednim slikama možemo videti rezultate:
+
+        \begin{center}
+            \label{im:SVM F1 score}
+            \includegraphics[height=7cm,keepaspectratio]{SVM F1 score}
+            \captionof{figure}{SVM grafik F1 rezultata}
+        \end{center}
+        
+        \begin{center}
+            \label{im:SVM Accuracy score}
+            \includegraphics[height=7cm,keepaspectratio]{SVM Accuracy score.png}
+            \captionof{figure}{SVM grafik tačnosti}
+        \end{center}
+
+        \begin{center}
+            \label{im:SVM Confusion matrix}
+            \includegraphics[height=15cm,keepaspectratio]{SVM Confusion matrix.png}
+            \captionof{figure}{Matrica konfuzije SVM-a}
+        \end{center}
+        Može se primetiti da ne samo što imaju istu tačnost i F1 rezultat, već su iste i promašene klase, te možemo zaključiti da modeli, iako imaju malo drugačije parametre u zavisnosti od ulaza, na kraju identično uče.
+
+    \subsection{KNN}
+        KNN je model koji klasifikuje tako što za jedan uzorak nalazi k najbližih suseda, pa metodom glasanja odluči kojoj klasi taj uzorak pripada.
+
+        \par Korišćenjem Grid Search-a, nađeni su sledeći hiperparametri
+        \begin{itemize}
+            \item Normal dataset - n\_neighbors: 3, p: 1, weights: distance
+            \item PCA dataset - n\_neighbors: 1, p: 8, weights: uniform
+            \item Normal dataset with SMOTE - n\_neighbors: 3, p: 1, weights: uniform
+            \item PCA dataset with SMOTE - n\_neighbors: 2, p: 4, weights: uniform
+        \end{itemize}
+
+        U narednim slikama možemo videti rezultate:
+
+        \begin{center}
+            \label{im:KNN F1 score}
+            \includegraphics[height=7cm,keepaspectratio]{KNN F1 score}
+            \captionof{figure}{KNN grafik F1 rezultata}
+        \end{center}
+        
+        \begin{center}
+            \label{im:KNN Accuracy score}
+            \includegraphics[height=7cm,keepaspectratio]{KNN Accuracy score.png}
+            \captionof{figure}{KNN grafik tačnosti}
+        \end{center}
+
+        \begin{center}
+            \label{im:KNN Confusion matrix}
+            \includegraphics[height=15cm,keepaspectratio]{KNN Confusion matrix.png}
+            \captionof{figure}{KNN Matrica konfuzije}
+        \end{center}
+        
+    \subsection{Poređenje modela}
+        Koristićemo model koji se najbolje pokazao u F1 metrikama od svih 3 modela.
+
+        \par Najjači model je XGBoost sa 96\%, zatim SVM sa 90.59\%, dok KNN ima 84.40\%.
+
+        \begin{center}
+            \label{im:Classification comparison F1 score}
+            \includegraphics[height=6cm,keepaspectratio]{Classification comparison F1 score.png}
+            \captionof{figure}{Poređenje najboljih modela}
+        \end{center}
+
+    \subsection{Ansambl}
+        Ansambl se lošije pokazao nego najbolji model, što opravdavamo sličnosti u razlikama modela, pa greške u KNN-u i SVM-u utiču gore na rezultat ansambl modela, davajući tačnost od 90.58\% što je lošije od najboljeg modela, XGBoost-a.
+
+        \begin{center}
+            \label{im:Ensemble comparison F1 score}
+            \includegraphics[height=7cm,keepaspectratio]{Ensemble comparison F1 score.png}
+            \captionof{figure}{Poređenje modela sa ansamblom}
+        \end{center}
+
+        \begin{center}
+            \label{im:Ensemble confusion matrix}
+            \includegraphics[height=10cm,keepaspectratio]{Ensemble confusion matrix.png}
+            \captionof{figure}{Matrica konfuzije ansambl modela}
+        \end{center}
+
+\section{Klasterovanje}
+    Klasterovanje je rađeno korišćenjem 2 algoritma: 
+    \begin{itemize}
+        \item KMeans
+        \item Gaussian Mixture
+    \end{itemize}
+
+    Oba algoritma zbog vizualizacije koriste 2 komponente ekstraktovane pomoću 2 algoritma za redukciju dimenzionalnosti: PCA i t-SNE.
+
+    \subsection{KMeans}
+        KMeans algoritam je jedan od najstarijih i najpopularnijih algoritama za klasterovanje podataka, gde svaki uzorak se iterativno spaja nekom klasteru u zavisnosti od K najbližih klastera. 
+
+        \begin{center}
+            \label{im:KMeans - PCA}
+            \includegraphics[height=15cm,keepaspectratio]{KMeans - PCA.png}
+            \captionof{figure}{KMeans algoritam na PCA datasetu}
+        \end{center}
+
+        \begin{center}
+            \label{im:KMeans - PCA inertia}
+            \includegraphics[height=5cm,keepaspectratio]{KMeans - PCA inertia.png}
+            \captionof{figure}{KMeans inercija na PCA datasetu}
+            \label{im:KMeans - PCA sihouette}
+            \includegraphics[height=5cm,keepaspectratio]{KMeans - PCA silhouette.png}
+            \captionof{figure}{KMeans skor siluete na PCA datasetu}
+        \end{center}
+
+        
+        \begin{center}
+            \includegraphics[height=15cm,keepaspectratio]{KMeans - tSNE.png}
+            \captionof{figure}{KMeans algoritam na t-SNE datasetu}
+        \end{center}
+        
+        \begin{center}
+            \label{im:KMeans - tSNE inertia}
+            \includegraphics[height=5cm,keepaspectratio]{KMeans - tSNE inertia.png}
+            \captionof{figure}{KMeans inercija na t-SNE datasetu}
+            \label{im:KMeans - tSNE sihouette}
+            \includegraphics[height=5cm,keepaspectratio]{KMeans - tSNE silhouette.png}
+            \captionof{figure}{KMeans skor siluete na t-SNE datasetu}
+        \end{center}
+        
+        Može se primetiti da nijedan ni drugi oblik redukcije dimenzionalnosti ne pomaže u dobrom klasterovanju. Podaci su takođe pokušani za klaster sa 90 PCA komponenti (85\% suma varijanse) ali bez uspeha.
+
+    \subsection{Gaussian mešavina}
+        Gausova mešavina je model koji pretpostavlja da su podaci izvedeni iz jedne ili više normalnih distribucija.
+
+        \subsubsection{PCA dataset - poređenje tipova kovarijanse}
+
+        \begin{center}
+            \label{im:Gaussian Mixture - PCA bic_per_cov_type}
+            \includegraphics[height=7cm,keepaspectratio]{Gaussian Mixture - PCA bic_per_cov_type.png}
+            \captionof{figure}{BIC skor u zavisnosti od tipa kovarijanse na PCA datasetu}
+        \end{center}
+
+        \begin{center}
+            \label{im:Gaussian Mixture - PCA silhouette_per_cov_type}
+            \includegraphics[height=7cm,keepaspectratio]{Gaussian Mixture - PCA silhouette_per_cov_type.png}
+            \captionof{figure}{Skor siluete u zavisnosti od tipa kovarijanse na PCA datasetu}
+        \end{center}
+
+        \newpage
+        \subsubsection{PCA dataset sa punim tipom kovarijanse}
+        \begin{center}
+            \label{im:Gaussian Mixture - full}
+            \includegraphics[height=15cm,keepaspectratio]{Gaussian Mixture - PCA full.png}
+            \captionof{figure}{PCA full}
+        \end{center}
+        \begin{center}
+            \label{im:Gaussian Mixture - full}
+            \includegraphics[height=6cm,keepaspectratio]{Gaussian Mixture - PCA full bic_and_silhouette.png}
+            \captionof{figure}{PCA full}
+        \end{center}
+
+        \newpage
+        \subsubsection{PCA dataset sa sfernim tipom kovarijanse}
+        \begin{center}
+            \label{im:Gaussian Mixture - spherical}
+            \includegraphics[height=15cm,keepaspectratio]{Gaussian Mixture - PCA spherical.png}
+            \captionof{figure}{PCA spherical}
+        \end{center}
+        \begin{center}
+            \label{im:Gaussian Mixture - spherical}
+            \includegraphics[height=6cm,keepaspectratio]{Gaussian Mixture - PCA spherical bic_and_sihlouette.png}
+            \captionof{figure}{PCA spherical}
+        \end{center}
+
+        \newpage
+        \subsubsection{PCA dataset sa povezanim tipom kovarijanse}
+        \begin{center}
+            \label{im:Gaussian Mixture - tied}
+            \includegraphics[height=15cm,keepaspectratio]{Gaussian Mixture - PCA tied.png}
+            \captionof{figure}{PCA tied}
+        \end{center}
+        \begin{center}
+            \label{im:Gaussian Mixture - tied}
+            \includegraphics[height=6cm,keepaspectratio]{Gaussian Mixture - PCA tied bic_and_silhouette.png}
+            \captionof{figure}{PCA tied}
+        \end{center}
+        
+        \newpage
+        \subsubsection{t-SNE dataset - poređenje tipova kovarijanse}
+
+        \begin{center}
+            \label{im:Gaussian Mixture - tSNE bic_per_cov_type}
+            \includegraphics[height=7cm,keepaspectratio]{Gaussian Mixture - tSNE bic_per_cov_type.png}
+            \captionof{figure}{BIC skor u zavisnosti od tipa kovarijanse na t-SNE datasetu}
+        \end{center}
+
+        \begin{center}
+            \label{im:Gaussian Mixture - tSNE silhouette_per_cov_type}
+            \includegraphics[height=7cm,keepaspectratio]{Gaussian Mixture - tSNE silhouette_per_cov_type.png}
+            \captionof{figure}{Skor siluete u zavisnosti od tipa kovarijanse na t-SNE datasetu}
+        \end{center}
+
+        \subsubsection{t-SNE dataset sa punim tipom kovarijanse}
+        \begin{center}
+            \label{im:Gaussian Mixture - full}
+            \includegraphics[height=15cm,keepaspectratio]{Gaussian Mixture - tSNE full.png}
+            \captionof{figure}{t-SNE full}
+        \end{center}
+        \begin{center}
+            \label{im:Gaussian Mixture - full}
+            \includegraphics[height=6cm,keepaspectratio]{Gaussian Mixture - tSNE full bic_and_silhouette.png}
+            \captionof{figure}{t-SNE full}
+        \end{center}
+
+        \newpage
+        \subsubsection{t-SNE dataset sa sfernim tipom kovarijanse}
+        \begin{center}
+            \label{im:Gaussian Mixture - spherical}
+            \includegraphics[height=15cm,keepaspectratio]{Gaussian Mixture - tSNE spherical.png}
+            \captionof{figure}{t-SNE spherical}
+        \end{center}
+        \begin{center}
+            \label{im:Gaussian Mixture - spherical}
+            \includegraphics[height=6cm,keepaspectratio]{Gaussian Mixture - tSNE spherical bic_and_silhouette.png}
+            \captionof{figure}{t-SNE spherical}
+        \end{center}
+
+        \newpage
+
+\section{Pravila pridruživanja}
+    Korišćen je algoritam Apriori na IBM-ovom programu SPSS. S obzirom da skup podataka sadrži samo kontinualne vrednosti, neophodno je pretvoriti te vrednosti u kategoričke atribute. To radimo koristeći binning koji podatke deli na rang sa +-2 standardne devijacije. Radi jednostavnosti modela i prikaza izlaza, selektovaćemo samo 4 atributa.
+
+    \begin{center}
+            \label{im:Associtation Rules - Apriori}
+            \includegraphics[height=6cm,keepaspectratio]{apriori.png}
+            \captionof{figure}{Rezultat Apriori algoritma}
+        \end{center}
+
+    Model nažalost ne pokazuje dobra pravila, davajući za neke grupe visok lift, a malu podršku, a na nekim visoku podršku ali mali lift. Može se zaključiti da model nije našao dobra pravila pridruživanja u ovom skupu podataka.
+    
+\section{Zaključak i diskusija}
+        Klasifikacija je urađena uspešno, očigledno je da sva 3 modela uče. Ni KNN, koji je po rezultatu najgori model, se nije pokazao bezuspešno, davajući rezultat od 84.40\%. Modeli su većinski mešali 2 para gena:
+        \begin{itemize}
+            \item HER i Basal
+            \item Luminal A i Luminal B
+        \end{itemize}
+        Ansambl metoda se pokazala u rangu sa SVM-om, što možemo opravdati gledanjem u matricu konfuzije, videći da su greške slične kroz modele te glasanjem, SVM i KNN izglasaju XGBoost.
+        
+    \par
+        Što se klasterovanja tiče, ni KMeans ni gausova mešavina se nisu pokazali dobro u klasterovanju, što nas navodi da nije moguće pronaći dobru opciju za klasterovanje na ovom skupu podataka. Gausova mešavina predstavlja komplikovaniju metodu za klasterovanje, s obzirom da ne pretpostavlja oblik klastera, gde zapravo jedan uzorak sadrži verovatnoće da se nalazi u nekom klasteru. Metrike kao što su BIC i skor siluete takođe nisu pomogle u nalaženju dobrih klastera, te možemo pretpostaviti da nema smisla raditi klasterovanje na ovom skupu podataka.
+
+    U ovom radu prikazane su razne tehnike i razni algoritmi za nadgledano i nenadgledano učenje. Rad je napisan u pratnji sa GitHub repozitorijumom koji sadrži implementaciju svega navedenog.
+    
+
+\section{Reference}
+
+    [1] Feltes, B.C.; Chandelier, E.B.; Grisci, B.I.; Dorn, M. (2019) CuMiDa: An Extensively Curated Microarray Database for Benchmarking and Testing of Machine Learning Approaches in Cancer Research. Journal of Computational Biology, 26 (4), 376-386. 
+    \par
+    [2] Pedregosa, F. et al., 2011. Scikit-learn: Machine learning in Python. Journal of machine learning research
+
+\end{document}
