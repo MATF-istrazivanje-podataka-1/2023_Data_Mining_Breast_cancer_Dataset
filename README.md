@@ -31,5 +31,6 @@ numpy, pandas, seaborn, pickle, sklearn, xgboost, imblearn, matplotlib
 - Klasterovanje: <br>
     - KMeans
     - Gaussian Mixture
-- Pravila pridruživanja: Apriori
+- Pravila pridruživanja: <br>
+    - Apriori
 
