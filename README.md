@@ -14,12 +14,13 @@ Zbog prevelike veličine fajla, skup podataka se mora skinuti
 
 Skinuti csv dataset u `dataset/` folder. <br>
 Za rad je potrebno pokrenuti prvo `preprocessing/extract_datasets.py` koji će generisati normalizovani dataset. <br>
-Za poređenje modela u klasifikaciji, tj. fajla `models/classification/model_comparison.ipynb`, morate pokrenuti fajlove `KNN.ipynb`, `xgboost.ipynb` i `SVM.ipynb` koji se nalaze u istom folderu radi ekstrakcije modela. <br>
+
+Za poređenje modela u klasifikaciji, tj. fajla `models/classification/model_comparison.ipynb`, možete skinuti modele [ovde](https://drive.google.com/file/d/1t8Pr_HJzzFVPZG7iErBdctsX-S81sNiB/view?usp=sharing) i staviti ih u istoimeni folder `models/classification`, ali takođe možete i pokrenuti fajlove `KNN.ipynb`, `xgboost.ipynb` i `SVM.ipynb` koji se nalaze u tom folderu radi ekstrakcije modela. <br>
 _OPREZ:_ Modeli su veliki (~250 MB ukupno)
 
-### Koriscene biblioteke
-numpy, pandas, seaborn, pickle, sklearn, xgboost, imblearn, matplotlib
-
+### Korišćene biblioteke
+`numpy`, `pandas`, `seaborn`, `pickle`, `sklearn`, `xgboost`, `imblearn`, `matplotlib` <br>
+Sve biblioteke se mogu instalirati korišćenjem paket menadžera `pip`.
 
 ## Korišćeni modeli
 
